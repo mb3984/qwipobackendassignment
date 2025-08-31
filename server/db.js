@@ -1,28 +1,51 @@
-import mysql from "mysql2";
-import dotenv from "dotenv";
-dotenv.config();
+import sqlite3 from "sqlite3";
+import { open } from "sqlite";
+import path from "path";
+import { fileURLToPath } from "url";
 
-const db = mysql.createConnection({
-  host: process.env.host,
-  user: process.env.user, // your MySQL username
-  password: process.env.password, // your MySQL password
-  database: process.env.database, // create this db in MySQL
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const dbPromise = open({
+  filename: path.join(__dirname, "customer.db"),
+  driver: sqlite3.Database,
 });
 
-console.log(
-  "ENV:",
-  process.env.host,
-  process.env.user,
-  process.env.password,
-  process.env.database
-);
+// Initialize tables
+(async () => {
+  try {
+    const db = await dbPromise;
+    await db.run(`
+      CREATE TABLE IF NOT EXISTS customers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        firstName TEXT,
+        lastName TEXT,
+        phone TEXT,
+        email TEXT UNIQUE,
+        address TEXT,
+        city TEXT,
+        state TEXT,
+        pincode TEXT
+      )
+    `);
 
-db.connect((err) => {
-  if (err) {
-    console.error("❌ DB Connection Failed:", err);
-    return;
+    await db.run(`
+      CREATE TABLE IF NOT EXISTS addresses (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        customerId INTEGER,
+        address TEXT,
+        city TEXT,
+        state TEXT,
+        country TEXT,
+        postalCode TEXT,
+        FOREIGN KEY (customerId) REFERENCES customers(id) ON DELETE CASCADE
+      )
+    `);
+
+    console.log("✅ SQLite database initialized");
+  } catch (err) {
+    console.error("❌ Error initializing database:", err);
   }
-  console.log("✅ MySQL Connected...");
-});
+})();
 
-export default db;
+export default dbPromise;

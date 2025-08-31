@@ -1,180 +1,212 @@
-import db from "../db.js";
+import dbPromise from "../db.js";
 
 // ✅ Create Customer
-export const createCustomer = (req, res) => {
-  const { firstName, lastName, phone, email, address, city, state, pincode } =
-    req.body;
+export const createCustomer = async (req, res) => {
+  try {
+    const { firstName, lastName, phone, email, address, city, state, pincode } =
+      req.body;
 
-  if (
-    !firstName ||
-    !lastName ||
-    !phone ||
-    !address ||
-    !city ||
-    !state ||
-    !pincode
-  ) {
-    return res.status(400).json({ message: "All fields are required" });
-  }
-
-  const sql = `INSERT INTO customers (firstName, lastName, phone, email, address, city, state, pincode) 
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-
-  db.query(
-    sql,
-    [firstName, lastName, phone, email, address, city, state, pincode],
-    (err, result) => {
-      if (err) return res.status(500).json({ error: err });
-      res.status(201).json({
-        message: "Customer created successfully",
-        customerId: result.insertId,
-      });
+    if (
+      !firstName ||
+      !lastName ||
+      !phone ||
+      !address ||
+      !city ||
+      !state ||
+      !pincode
+    ) {
+      return res.status(400).json({ message: "All fields are required" });
     }
-  );
+
+    const db = await dbPromise;
+    const result = await db.run(
+      `INSERT INTO customers (firstName, lastName, phone, email, address, city, state, pincode)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [firstName, lastName, phone, email, address, city, state, pincode]
+    );
+
+    res.status(201).json({
+      message: "Customer created successfully",
+      customerId: result.lastID,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
 // ✅ Get All Customers
-export const getCustomers = (req, res) => {
-  const sql = "SELECT * FROM customers";
-  db.query(sql, (err, results) => {
-    if (err) return res.status(500).json({ error: err });
+export const getCustomers = async (req, res) => {
+  try {
+    const db = await dbPromise;
+    const results = await db.all("SELECT * FROM customers");
     res.json(results);
-  });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
 // ✅ Get Customer By ID
-export const getCustomerById = (req, res) => {
-  const sql = "SELECT * FROM customers WHERE id = ?";
-  db.query(sql, [req.params.id], (err, results) => {
-    if (err) return res.status(500).json({ error: err });
-    if (results.length === 0)
-      return res.status(404).json({ message: "Customer not found" });
-    res.json(results[0]);
-  });
+export const getCustomerById = async (req, res) => {
+  try {
+    const db = await dbPromise;
+    const result = await db.get("SELECT * FROM customers WHERE id = ?", [
+      req.params.id,
+    ]);
+
+    if (!result) return res.status(404).json({ message: "Customer not found" });
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
 // ✅ Update Customer
-export const updateCustomer = (req, res) => {
-  const { firstName, lastName, phone, email, address, city, state, pincode } =
-    req.body;
-  const sql = `UPDATE customers 
-               SET firstName=?, lastName=?, phone=?, email=?, address=?, city=?, state=?, pincode=? 
-               WHERE id=?`;
+export const updateCustomer = async (req, res) => {
+  try {
+    const { firstName, lastName, phone, email, address, city, state, pincode } =
+      req.body;
+    const db = await dbPromise;
 
-  db.query(
-    sql,
-    [
-      firstName,
-      lastName,
-      phone,
-      email,
-      address,
-      city,
-      state,
-      pincode,
-      req.params.id,
-    ],
-    (err) => {
-      if (err) return res.status(500).json({ error: err });
-      res.json({ message: "Customer updated successfully" });
-    }
-  );
+    await db.run(
+      `UPDATE customers 
+       SET firstName=?, lastName=?, phone=?, email=?, address=?, city=?, state=?, pincode=? 
+       WHERE id=?`,
+      [
+        firstName,
+        lastName,
+        phone,
+        email,
+        address,
+        city,
+        state,
+        pincode,
+        req.params.id,
+      ]
+    );
+
+    res.json({ message: "Customer updated successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
 // ✅ Delete Customer
-export const deleteCustomer = (req, res) => {
-  const sql = "DELETE FROM customers WHERE id=?";
-  db.query(sql, [req.params.id], (err) => {
-    if (err) return res.status(500).json({ error: err });
+export const deleteCustomer = async (req, res) => {
+  try {
+    const db = await dbPromise;
+    await db.run("DELETE FROM customers WHERE id=?", [req.params.id]);
     res.json({ message: "Customer deleted successfully" });
-  });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
 // ✅ Search by Query Params
-export const searchCustomers = (req, res) => {
-  const { city, state, pincode } = req.query;
+export const searchCustomers = async (req, res) => {
+  try {
+    const { city, state, pincode } = req.query;
 
-  let sql = "SELECT * FROM customers WHERE 1=1";
-  let values = [];
+    let sql = "SELECT * FROM customers WHERE 1=1";
+    let values = [];
 
-  if (city) {
-    sql += " AND city LIKE ?";
-    values.push(`%${city}%`);
-  }
-  if (state) {
-    sql += " AND state LIKE ?";
-    values.push(`%${state}%`);
-  }
-  if (pincode) {
-    sql += " AND pincode LIKE ?";
-    values.push(`%${pincode}%`);
-  }
+    if (city) {
+      sql += " AND city LIKE ?";
+      values.push(`%${city}%`);
+    }
+    if (state) {
+      sql += " AND state LIKE ?";
+      values.push(`%${state}%`);
+    }
+    if (pincode) {
+      sql += " AND pincode LIKE ?";
+      values.push(`%${pincode}%`);
+    }
 
-  db.query(sql, values, (err, results) => {
-    if (err) return res.status(500).json({ error: err });
+    const db = await dbPromise;
+    const results = await db.all(sql, values);
+
     res.json(results);
-  });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
 // ✅ Get All Addresses of a Customer
-export const getCustomerAddresses = (req, res) => {
-  const sql = "SELECT * FROM addresses WHERE customerId=?";
-  db.query(sql, [req.params.id], (err, results) => {
-    if (err) return res.status(500).json({ error: err });
+export const getCustomerAddresses = async (req, res) => {
+  try {
+    const db = await dbPromise;
+    const results = await db.all("SELECT * FROM addresses WHERE customerId=?", [
+      req.params.id,
+    ]);
     res.json(results);
-  });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
 // ✅ Get Single Address
-export const getSingleAddress = (req, res) => {
-  const sql = "SELECT * FROM addresses WHERE customerId=? AND id=?";
-  db.query(sql, [req.params.id, req.params.addressId], (err, results) => {
-    if (err) return res.status(500).json({ error: err });
-    if (results.length === 0)
-      return res.status(404).json({ message: "Address not found" });
-    res.json(results[0]);
-  });
+export const getSingleAddress = async (req, res) => {
+  try {
+    const db = await dbPromise;
+    const result = await db.get(
+      "SELECT * FROM addresses WHERE customerId=? AND id=?",
+      [req.params.id, req.params.addressId]
+    );
+
+    if (!result) return res.status(404).json({ message: "Address not found" });
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
 // ✅ Add Address
-export const addAddress = (req, res) => {
-  const { address, city, state, country, postalCode } = req.body;
-  const sql = `INSERT INTO addresses (customerId, address, city, state, country, postalCode) 
-               VALUES (?, ?, ?, ?, ?, ?)`;
+export const addAddress = async (req, res) => {
+  try {
+    const { address, city, state, country, postalCode } = req.body;
+    const db = await dbPromise;
 
-  db.query(
-    sql,
-    [req.params.id, address, city, state, country, postalCode],
-    (err, result) => {
-      if (err) return res.status(500).json({ error: err });
-      res
-        .status(201)
-        .json({ message: "Address added", addressId: result.insertId });
-    }
-  );
+    const result = await db.run(
+      `INSERT INTO addresses (customerId, address, city, state, country, postalCode)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [req.params.id, address, city, state, country, postalCode]
+    );
+
+    res.status(201).json({
+      message: "Address added",
+      addressId: result.lastID,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
-// ✅ Update Address (fixed `postalCode`)
-export const updateAddress = (req, res) => {
-  const { address, city, state, country, postalCode } = req.body;
-  const sql = `UPDATE addresses 
-               SET address=?, city=?, state=?, country=?, postalCode=? 
-               WHERE id=?`;
+// ✅ Update Address
+export const updateAddress = async (req, res) => {
+  try {
+    const { address, city, state, country, postalCode } = req.body;
+    const db = await dbPromise;
 
-  db.query(
-    sql,
-    [address, city, state, country, postalCode, req.params.addressId],
-    (err) => {
-      if (err) return res.status(500).json({ error: err });
-      res.json({ message: "Address updated successfully" });
-    }
-  );
+    await db.run(
+      `UPDATE addresses 
+       SET address=?, city=?, state=?, country=?, postalCode=? 
+       WHERE id=?`,
+      [address, city, state, country, postalCode, req.params.addressId]
+    );
+
+    res.json({ message: "Address updated successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
+
 // ✅ Delete Address
-export const deleteAddress = (req, res) => {
-  const sql = "DELETE FROM addresses WHERE id=?";
-  db.query(sql, [req.params.addressId], (err) => {
-    if (err) return res.status(500).json({ error: err });
+export const deleteAddress = async (req, res) => {
+  try {
+    const db = await dbPromise;
+    await db.run("DELETE FROM addresses WHERE id=?", [req.params.addressId]);
     res.json({ message: "Address deleted successfully" });
-  });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
