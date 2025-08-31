@@ -1,0 +1,126 @@
+
+GET http://localhost:5000/
+### Create a New Customer
+POST http://localhost:5000/api/customers
+Content-Type: application/json
+
+{
+  "firstName": "Madhu",
+  "lastName": "Babu",
+  "phone": "9876543210",
+  "email": "madhu@example.com",
+  "address": "H.No 12-34, Main Road",
+  "city": "Hyderabad",
+  "state": "Telangana",
+  "pincode": "500001"
+}
+###
+POST http://localhost:5000/api/customers
+Content-Type: application/json
+
+{
+  "firstName": "Ravi",
+  "lastName": "Kumar",
+  "phone": "9876543210",
+  "email": "ravi@example.com",
+  "address": "H.No 12-32, Main Road",
+  "city": "Anaparthi",
+  "state": "Andhrapradesh",
+  "pincode": "500003"
+}
+### Get All Customers
+GET http://localhost:5000/api/customers
+
+### Get Single Customer By ID
+GET http://localhost:5000/api/customers/1
+
+### Update Customer By ID
+PUT http://localhost:5000/api/customers/1
+Content-Type: application/json
+
+{
+  "firstName": "Madhu",
+  "lastName": "Sudhan",
+  "phone": "9876500000",
+  "email": "madhu.reddy@example.com",
+  "address": "New Colony, Hyderabad",
+  "city": "Hyderabad",
+  "state": "Telangana",
+  "pincode": "500002"
+}
+
+### Delete Customer By ID
+DELETE http://localhost:5000/api/customers/2
+
+### Add New Address for a Customer
+POST http://localhost:5000/api/customers/1/addresses
+Content-Type: application/json
+
+{
+  "address": "Flat 101, Ameerpet",
+  "city": "Hyderabad",
+  "state": "Telangana",
+  "postalCode": "500016",
+  "country": "India"
+}
+### Add New Address for a Customer
+POST http://localhost:5000/api/customers/1/addresses
+Content-Type: application/json
+
+{
+  "address": "Flat 101, Madhapur",
+  "city": "Hyderabad",
+  "state": "Telangana",
+  "postalCode": "500023",
+  "country": "India"
+}
+### Add New Address for a Customer
+POST http://localhost:5000/api/customers/3/addresses
+Content-Type: application/json
+
+{
+  "address": "Flat 91, Hitech city",
+  "city": "Hyderabad",
+  "state": "Telangana",
+  "postalCode": "500067",
+  "country": "India"
+}
+
+### Get All Addresses of a Customer
+GET http://localhost:5000/api/customers/1/addresses
+### Get All Addresses of a Customer
+GET http://localhost:5000/api/customers/3/addresses
+
+### Get Single Address of a Customer
+GET http://localhost:5000/api/customers/1/addresses/2
+### Get Single Address of a Customer
+GET http://localhost:5000/api/customers/3/addresses/3
+
+### Update Address By ID
+PUT http://localhost:5000/api/customers/1/addresses/2
+Content-Type: application/json
+
+{
+  "address": "Flat 202, SR Nagar",
+  "city": "Hyderabad",
+  "state": "Telangana",
+  "country": "India",
+  "postalCcode": "500018"
+
+}
+
+### Delete Address By ID
+DELETE http://localhost:5000/api/customers/1/addresses/2
+
+### Search Customers by City
+GET http://localhost:5000/api/customers/search?city=Hyderabad
+
+### Search Customers by State
+GET http://localhost:5000/api/customers/search?state=Telangana
+### Search Customers by State
+GET http://localhost:5000/api/customers/search?state=Andhrapradesh
+
+### Search Customers by Pincode
+GET http://localhost:5000/api/customers/search?pincode=500001
+
+
