@@ -7,6 +7,12 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
+// ✅ Allow frontend requests
+app.use(cors({
+  origin: ["http://localhost:5173", "https://your-frontend-domain.com"], // whitelist
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
 
 // Routes
 app.use("/api/customers", customerRoutes);

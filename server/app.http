@@ -122,5 +122,5 @@ GET http://localhost:5000/api/customers/search?state=Andhrapradesh
 
 ### Search Customers by Pincode
 GET http://localhost:5000/api/customers/search?pincode=500001
-
-
+###
+GET http://localhost:5000/api/customers?page=1&limit=5
