@@ -34,12 +34,45 @@ export const createCustomer = async (req, res) => {
   }
 };
 
-// ✅ Get All Customers
+// ✅ Get All Customers with Pagination + Sorting
 export const getCustomers = async (req, res) => {
   try {
     const db = await dbPromise;
-    const results = await db.all("SELECT * FROM customers");
-    res.json(results);
+
+    // Extract query params
+    let { page = 1, limit = 5, sortBy = "id", order = "ASC" } = req.query;
+
+    // Convert to numbers
+    page = parseInt(page);
+    limit = parseInt(limit);
+
+    // Calculate offset for pagination
+    const offset = (page - 1) * limit;
+
+    // Whitelist allowed sorting fields
+    const validSortFields = ["id", "name", "email", "city", "state", "pincode"];
+    if (!validSortFields.includes(sortBy)) {
+      sortBy = "id"; // default
+    }
+
+    // Whitelist sort order
+    order = order.toUpperCase() === "DESC" ? "DESC" : "ASC";
+
+    // Fetch paginated + sorted results
+    const results = await db.all(
+      `SELECT * FROM customers ORDER BY ${sortBy} ${order} LIMIT ? OFFSET ?`,
+      [limit, offset]
+    );
+
+    // Get total count for frontend pagination UI
+    const total = await db.get("SELECT COUNT(*) as count FROM customers");
+
+    res.json({
+      data: results,
+      total: total.count,
+      page,
+      totalPages: Math.ceil(total.count / limit),
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
